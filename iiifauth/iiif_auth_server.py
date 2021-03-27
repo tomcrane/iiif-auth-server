@@ -84,7 +84,7 @@ def image_info(identifier):
 
     print('info.json request for', identifier)
     info = {
-        "id": url_for('image', identifier=identifier),
+        "id": url_for('image', identifier=identifier, _external=True),
         "metadata": {
             "foo": "bar",
             "baz": "(other image metadata useful to the client in constructing image requests)"
@@ -92,14 +92,14 @@ def image_info(identifier):
     }
     if identifier == "protected.jpg":
         info["authService"] = {
-            "id": url_for('cookie_service'),
+            "id": url_for('cookie_service', _external=True),
             "label": "Login to Example Institution",
             "header": "Please Log In",
             "description": "Please log in with your example account to view this image.",
             "confirmLabel": "Login",
             "failureHeader": "Authentication Failed",
             "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>",
-            "tokenService": url_for('token_service')
+            "tokenService": url_for('token_service', _external=True)
         }
 
     if authorise_probe_request(identifier):
@@ -214,7 +214,7 @@ def successful_login(origin):
     """
         Create a new session and direct the user to a self-closing window
     """
-    resp = redirect(url_for('post_login'))
+    resp = redirect(url_for('post_login'), _external=True)
     # create a session with permission to see protected.jpg
     make_session("protected.jpg", origin)
     return resp
@@ -334,7 +334,7 @@ def kill_sessions():
             if key != 'session_id':
                 session.pop(key, None)
 
-    return redirect(url_for('view_session_tokens'))
+    return redirect(url_for('view_session_tokens'), _external=True)
 
 
 def connect_db():
