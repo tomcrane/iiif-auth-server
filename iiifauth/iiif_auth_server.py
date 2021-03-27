@@ -43,6 +43,13 @@ def index():
     return render_template('index.html', images=os.listdir(MEDIA_ROOT))
 
 
+@app.route('/debug.json')
+def debug():
+    return jsonify({
+        "url": request.url
+    })
+
+
 def make_acao_response(response_object, status=None, cache=None, origin=None):
     """We're handling CORS directly for clarity"""
     resp = make_response(response_object, status)
@@ -368,4 +375,5 @@ def close_db(error):
 
 
 if __name__ == '__main__':
-    app.run(ssl_context='adhoc')
+    # app.run(ssl_context=app.config.get("SSL_CONTEXT", None))
+    app.run()
