@@ -1,2 +1,2 @@
-web: gunicorn app:iiif-auth-server
+web: gunicorn app:iiifauth.iiif-auth-server
 
