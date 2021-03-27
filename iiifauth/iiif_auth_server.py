@@ -84,7 +84,7 @@ def image_info(identifier):
 
     print('info.json request for', identifier)
     info = {
-        "id": request.url,
+        "id": url_for('image', identifier=identifier),
         "metadata": {
             "foo": "bar",
             "baz": "(other image metadata useful to the client in constructing image requests)"
@@ -92,14 +92,14 @@ def image_info(identifier):
     }
     if identifier == "protected.jpg":
         info["authService"] = {
-            "id": f"{request.url_root}auth/cookie",
+            "id": url_for('cookie_service'),
             "label": "Login to Example Institution",
             "header": "Please Log In",
             "description": "Please log in with your example account to view this image.",
             "confirmLabel": "Login",
             "failureHeader": "Authentication Failed",
             "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>",
-            "tokenService": f"{request.url_root}auth/token"
+            "tokenService": url_for('token_service')
         }
 
     if authorise_probe_request(identifier):
