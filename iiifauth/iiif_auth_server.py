@@ -214,7 +214,7 @@ def successful_login(origin):
     """
         Create a new session and direct the user to a self-closing window
     """
-    resp = redirect(url_for('post_login'), _external=True)
+    resp = redirect(url_for('post_login'))
     # create a session with permission to see protected.jpg
     make_session("protected.jpg", origin)
     return resp
@@ -334,7 +334,7 @@ def kill_sessions():
             if key != 'session_id':
                 session.pop(key, None)
 
-    return redirect(url_for('view_session_tokens'), _external=True)
+    return redirect(url_for('view_session_tokens'))
 
 
 def connect_db():
