@@ -1,22 +1,13 @@
 {% extends "layout.html" %}
 {% block body %}
   <h3>Images</h3>
-  <ul class=images>
   {% for image in images %}
-    <li><a href="{{ image.id }}">{{ image.display }}</a>
-    <br/>{{ image.label }}</li>
-  {% else %}
-    <li><em>No images found!</em>
+      <h4>{{ image }}</h4>
+      <p><a href="{{ url_for('image_info', identifier=image) }}">service for image</a></p>
+      <p>
+      <img src="{{  url_for('image', identifier=image) }}" style="max-width: 100%" />
+      </p>
   {% endfor %}
-  </ul>
-  <h3>Manifests</h3>
-  <ul class=manifests>
-  {% for manifest in manifests %}
-    <li><a href="{{ url_for('manifest', identifier=manifest) }}">{{ manifest }}</a></li>
-  {% else %}
-    <li><em>No manifests found!</em>
-  {% endfor %}
-  </ul>
   <hr/>
   <p><a href="{{ url_for('view_session_tokens') }}">View session tokens</a></p>
 {% endblock %}

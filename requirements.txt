@@ -1,4 +1,2 @@
 Flask
-iiif2
-Pillow
 pyopenssl
