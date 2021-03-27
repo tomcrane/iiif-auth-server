@@ -18,18 +18,16 @@ python3 -m venv venv
 ```
 pip install --editable .
 ```
-4. to run for development:
+4. to run for _local_ development with an ad-hoc SSL cert:
 ```
 export FLASK_APP=iiifauth
 export FLASK_DEBUG=true
-flask run
+flask run --cert=adhoc
 ```
 or
 ```
 . runflask.sh
 ```
+This will give nasty warnings about the SSL but works without having to do anything further. It _must_ be run over https, even locally, otherwise `SameSite`, `Secure` cookies will be ignored by browsers.
 
-5. Token information is stored in a sqllite3 db, which needs to be initialised:
-```
-flask initdb
-```
+5. Token information is stored in a sqllite3 db which should initialise itself 
