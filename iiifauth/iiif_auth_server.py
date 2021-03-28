@@ -271,6 +271,7 @@ def token_service():
     """Token service"""
     origin = request.args.get('origin')
     message_id = request.args.get('messageId')
+    is_retry = "true" == request.args.get('isRetry')
     session_id = get_session_id()
     db_token = None
     print(f"looking for token for session {session_id}, service {PROTECTED_IMAGE_SERVICE}")
@@ -294,7 +295,8 @@ def token_service():
     else:
         token_object = {
             "error": "missingCredentials",
-            "description": "to be filled out"
+            "description": "No valid credentials were found in request for a token",
+            "isRetry": is_retry
         }
 
     if message_id:
