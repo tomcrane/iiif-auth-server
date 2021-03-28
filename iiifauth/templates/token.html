@@ -1,6 +1,14 @@
 <html>
 <body>
 
+<!-- this iframe can remain hidden UNLESS we need to request storage API access. In which case it needs to be made visible. -->
+<p>
+    Hi! This is a message from the server at {{ request.host }}. Your browser is running a page on a different domain.
+    Would you mind clicking this button, which will allow your browser to send the cookies you just acquired
+    when you logged in? Thanks ever so much!
+</p>
+<button id="requestStorageAccessButton">Request Storage Access</button>
+
 <script>
     let token = {{ token_object|safe }}; // server emits this, it's a jinja template variable
     log("Arrived at iframe with token " + JSON.stringify(token));
@@ -20,11 +28,8 @@
                   log("Token frame has storage access already, even though there was an error.");
                   postToken(true, "alreadyHasAccess");
               } else {
-                  console.log("Token frame DOES NOT HAVE storage access, requesting...");
-                  document.requestStorageAccess().then(
-                      () => { postToken(true, "userGrantedAccess") }, // resolve
-                      () => { postToken(false, "userDeniedAccess" ) } // reject
-                  );
+                  log("Token frame DOES NOT HAVE storage access. We're going to need to ASK the user.");
+                  askClientToDisplayThisFrame();
               }
             });
         } else {
@@ -41,9 +46,9 @@
         postToken(true);
     }
 
-    function postToken(frameHasStorageAccess, userInteractionResult){
+    function postToken(frameHasStorageAccess, userInteractionState){
         token.frameHasStorageAccess = frameHasStorageAccess;
-        token.userInteractionResult = userInteractionResult;
+        token.userInteractionState = userInteractionState;
         log("About to post token: " + JSON.stringify(token));
         window.parent.postMessage(token, "{{ origin }}");
     }
@@ -52,6 +57,20 @@
     // It's not part of the spec!
     function log(logMessage){
         window.parent.postMessage({"log": logMessage}, "{{ origin }}");
+    }
+
+    function askClientToDisplayThisFrame(){
+        document
+            .getElementById("requestStorageAccessButton")
+            .addEventListener("click", () => clickedRequestStorageAccess());
+        window.parent.postMessage({"userInteractionRequest": "show"}, "{{ origin }}");
+    }
+
+    function clickedRequestStorageAccess(){
+          document.requestStorageAccess().then(
+              () => { postToken(true, "userGrantedAccess") }, // resolve
+              () => { postToken(false, "userDeniedAccess" ) } // reject
+          );
     }
 </script>
 </body>
