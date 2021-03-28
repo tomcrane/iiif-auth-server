@@ -32,6 +32,9 @@
                   askClientToDisplayThisFrame();
               }
             });
+        } else if (token.error && token.error === "missingCredentials" && token.isRetry){
+            log("This is the RETRY after granting access, but it's still a missing credentials error.")
+            postToken(true, "stillNoCredentials");
         } else {
             log("This browser can use the Storage Access API, " +
                 "but we don't need to because there was no initial missingCredentials error");
