@@ -67,10 +67,11 @@
     }
 
     function clickedRequestStorageAccess(){
-          document.requestStorageAccess().then(
+        window.parent.postMessage({"userInteractionRequest": "clicked"}, "{{ origin }}");
+        document.requestStorageAccess().then(
               () => { postToken(true, "userGrantedAccess") }, // resolve
               () => { postToken(false, "userDeniedAccess" ) } // reject
-          );
+        );
     }
 </script>
 </body>
