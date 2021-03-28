@@ -1,21 +1,81 @@
 <html>
 <body>
-  <p>This window is for cross domain messaging</p>
-  <p>Normally, there's no need for it to have any visible content, but 
-    for this demo it's helpful to show the script.</p>
-  <pre>
-  &lt;script&gt;    
-      window.parent.postMessage(
-        {{ token_object }},
-        "{{ origin }}"
-      );    
-  &lt;/script&gt;
-  </pre>
-<script>    
-    window.parent.postMessage(
-      {{ token_object|safe }},
-      "{{ origin }}"
-    );    
+
+<!-- this iframe can remain hidden UNLESS we need to request storage API access. In which case it needs to be made visible. -->
+<p>
+    Hi! This is a message from the server at {{ request.host }}. Your browser is running a page on a different domain.
+    Would you mind clicking this button, which will allow your browser to send the cookies you just acquired
+    when you logged in? Thanks ever so much!
+</p>
+<button id="requestStorageAccessButton">Request Storage Access</button>
+
+<script>
+    let token = {{ token_object|safe }}; // server emits this, it's a jinja template variable
+    log("Arrived at iframe with token " + JSON.stringify(token));
+    token.storageAccessApiAvailable = false;
+
+    // Test for the presence of the API first (we're not calling it just yet)
+    if(document.hasStorageAccess)
+    {
+        log("iframe detects presence of Storage Access API.");
+        token.storageAccessApiAvailable = true;
+        if(token.error && token.error === "missingCredentials" && !token.isRetry){
+            log("The token has a missingCredentials error, and is NOT a retry.");
+            // This requires a user-gesture-initiated event loop - are we in one?
+            // If we're not it gets more complicated, we'll need a button here.
+            document.hasStorageAccess().then(hasAccess => {
+              if (hasAccess) {
+                  log("Token frame has storage access already, even though there was an error.");
+                  postToken(true, "alreadyHasAccess");
+              } else {
+                  log("Token frame DOES NOT HAVE storage access. We're going to need to ASK the user.");
+                  askClientToDisplayThisFrame();
+              }
+            });
+        } else if (token.error && token.error === "missingCredentials" && token.isRetry){
+            log("This is the RETRY after granting access, but it's still a missing credentials error.")
+            postToken(true, "stillNoCredentials");
+        } else {
+            log("This browser can use the Storage Access API, " +
+                "but we don't need to because there was no initial missingCredentials error");
+            postToken(true, "noInteractionRequired");
+        }
+    } else {
+        log("Storage API not detected. All we can do is post the token (which might be an error state)");
+        // Can we ALWAYS assume that the browser hasStorageAccess here? There was no error returned in the token.
+        // We're saying hasStorageAccess = true whether or not the Storage Access API is available.
+        // e.g., Chrome has no API but with third party cookies fully enabled, will get here.
+        // The browser does have access to storage.
+        postToken(true);
+    }
+
+    function postToken(frameHasStorageAccess, userInteractionState){
+        token.frameHasStorageAccess = frameHasStorageAccess;
+        token.userInteractionState = userInteractionState;
+        log("About to post token: " + JSON.stringify(token));
+        window.parent.postMessage(token, "{{ origin }}");
+    }
+
+    // This is not part of the flow, this is to allow our testbed client to log messages from this window.
+    // It's not part of the spec!
+    function log(logMessage){
+        window.parent.postMessage({"log": logMessage}, "{{ origin }}");
+    }
+
+    function askClientToDisplayThisFrame(){
+        document
+            .getElementById("requestStorageAccessButton")
+            .addEventListener("click", () => clickedRequestStorageAccess());
+        window.parent.postMessage({"userInteractionRequest": "show"}, "{{ origin }}");
+    }
+
+    function clickedRequestStorageAccess(){
+        window.parent.postMessage({"userInteractionRequest": "clicked"}, "{{ origin }}");
+        document.requestStorageAccess().then(
+              () => { postToken(true, "userGrantedAccess") }, // resolve
+              () => { postToken(false, "userDeniedAccess" ) } // reject
+        );
+    }
 </script>
 </body>
 </html>
