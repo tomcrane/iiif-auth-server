@@ -65,7 +65,7 @@
     function askClientToDisplayThisFrame(){
         document
             .getElementById("requestStorageAccessButton")
-            .addEventListener("click", () => clickedRequestStorageAccess());
+            .addEventListener("click", clickedRequestStorageAccess);
         window.parent.postMessage({"userInteractionRequest": "show"}, "{{ origin }}");
     }
 
