@@ -23,8 +23,8 @@ app.config.update(dict(
 # some globals
 APP_PATH = os.path.dirname(os.path.abspath(__file__))
 MEDIA_ROOT = os.path.join(APP_PATH, 'media')
-PROTECTED_IMAGE_SERVICE = "PROTECTED_IMAGES"
-CLICKTHROUGH_IMAGE_SERVICE = "CLICKTHROUGH_IMAGES"
+PROTECTED_IMAGE_SERVICE = "protected"
+CLICKTHROUGH_IMAGE_SERVICE = "clickthrough"
 
 
 @app.before_request
@@ -100,7 +100,7 @@ def image_info(identifier):
             "confirmLabel": "Login",
             "failureHeader": "Authentication Failed",
             "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>",
-            "tokenService": url_for('token_service', _external=True)
+            "tokenService": url_for('token_service', service_type=PROTECTED_IMAGE_SERVICE, _external=True)
         }
 
     if identifier == "clickthrough.jpg":
@@ -112,7 +112,7 @@ def image_info(identifier):
             "confirmLabel": "OK",
             "failureHeader": "Clickthrough Failed",
             "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>",
-            "tokenService": url_for('token_service', _external=True)
+            "tokenService": url_for('token_service', service_type=CLICKTHROUGH_IMAGE_SERVICE, _external=True)
         }
 
     if authorise_probe_request(identifier):
@@ -148,12 +148,12 @@ def authorise_probe_request(identifier):
         print('requires access control and no service_id found')
         return False
 
-    if service_id == PROTECTED_IMAGE_SERVICE:
-        print('User has access to service', PROTECTED_IMAGE_SERVICE, ' - request authorised')
+    if service_id == PROTECTED_IMAGE_SERVICE and identifier == "protected.jpg":
+        print('User has access to protected image service - request authorised')
         return True
 
-    if service_id == CLICKTHROUGH_IMAGE_SERVICE:
-        print('User has access to service', CLICKTHROUGH_IMAGE_SERVICE, ' - request authorised')
+    if service_id == CLICKTHROUGH_IMAGE_SERVICE and identifier == "clickthrough.jpg":
+        print('User has access to clickthrough image service - request authorised')
         return True
 
     print('info request is NOT authorised')
@@ -297,18 +297,18 @@ def post_login():
     return render_template('post_login.html')
 
 
-@app.route('/auth/token')
-def token_service():
+@app.route('/auth/token/<service_type>')
+def token_service(service_type):
     """Token service"""
     origin = request.args.get('origin')
     message_id = request.args.get('messageId')
     is_retry = "true" == request.args.get('isRetry')
     session_id = get_session_id()
     db_token = None
-    print(f"looking for token for session {session_id}, service {PROTECTED_IMAGE_SERVICE}")
+    print(f"looking for token for session {session_id}, service {service_type}")
     if session_id:
         db_token = query_db('select * from tokens where session_id=? and service_id=?',
-                            [session_id, PROTECTED_IMAGE_SERVICE], one=True)
+                            [session_id, service_type], one=True)
     if db_token:
         print(f"found token {db_token['token']}")
         session_origin = db_token['origin']
