@@ -24,6 +24,7 @@ app.config.update(dict(
 APP_PATH = os.path.dirname(os.path.abspath(__file__))
 MEDIA_ROOT = os.path.join(APP_PATH, 'media')
 PROTECTED_IMAGE_SERVICE = "PROTECTED_IMAGES"
+CLICKTHROUGH_IMAGE_SERVICE = "CLICKTHROUGH_IMAGES"
 
 
 @app.before_request
@@ -102,6 +103,18 @@ def image_info(identifier):
             "tokenService": url_for('token_service', _external=True)
         }
 
+    if identifier == "clickthrough.jpg":
+        info["authService"] = {
+            "id": url_for('clickthrough', _external=True),
+            "label": "Content Advisory",
+            "header": "Please read this",
+            "description": "Use of these images should comply with our policy.",
+            "confirmLabel": "OK",
+            "failureHeader": "Clickthrough Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>",
+            "tokenService": url_for('token_service', _external=True)
+        }
+
     if authorise_probe_request(identifier):
         return make_acao_response(jsonify(info), 200)
 
@@ -139,6 +152,10 @@ def authorise_probe_request(identifier):
         print('User has access to service', PROTECTED_IMAGE_SERVICE, ' - request authorised')
         return True
 
+    if service_id == CLICKTHROUGH_IMAGE_SERVICE:
+        print('User has access to service', CLICKTHROUGH_IMAGE_SERVICE, ' - request authorised')
+        return True
+
     print('info request is NOT authorised')
     return False
 
@@ -160,10 +177,13 @@ def authorise_resource_request(identifier):
     # does the request have a cookie acquired from this image's cookie service(s)?
     # In this demo, there is only cookie service.
     # In real life there may be many - or also just one, depending on requirements.
-    if session.get(PROTECTED_IMAGE_SERVICE, None):
+    if identifier == "protected.jpg" and session.get(PROTECTED_IMAGE_SERVICE, None):
         # we stored the user's access to this service in the session.
         # There will also be a row in the tokens table, but we don't need that
         # This is an example implementation, there are many ways to do this.
+        return True
+
+    if identifier == "clickthrough.jpg" and session.get(CLICKTHROUGH_IMAGE_SERVICE, None):
         return True
 
     # handle other possible authorisation mechanisms, such as IP
@@ -190,13 +210,24 @@ def cookie_service():
     return handle_login(origin, 'login.html')
 
 
+@app.route('/auth/clickthrough', methods=['GET'])
+def clickthrough():
+    """Cookie service (might be a login interaction pattern. Doesn't have to be)"""
+    origin = request.args.get('origin')
+    if origin is None:
+        # http://iiif.io/api/auth/1.0/#interaction-with-the-access-cookie-service
+        return make_response("Error - no origin supplied", 400)
+
+    return successful_login(origin, CLICKTHROUGH_IMAGE_SERVICE)
+
+
 def handle_login(origin, template):
     """
         Handle login GETs and POSTs
     """
     # We only have one protected resource
     if authorise_resource_request("protected.jpg"):
-        return successful_login(origin)
+        return successful_login(origin, PROTECTED_IMAGE_SERVICE)
 
     error = None
     if request.method == 'POST':
@@ -205,22 +236,22 @@ def handle_login(origin, template):
         elif request.form['password'] != 'password':
             error = 'Invalid password'
         else:
-            return successful_login(origin)
+            return successful_login(origin, PROTECTED_IMAGE_SERVICE)
 
     return render_template(template, error=error)
 
 
-def successful_login(origin):
+def successful_login(origin, service):
     """
         Create a new session and direct the user to a self-closing window
     """
     resp = redirect(url_for('post_login'))
     # create a session with permission to see protected.jpg
-    make_session("protected.jpg", origin)
+    make_session(origin, service)
     return resp
 
 
-def make_session(identifier, origin):
+def make_session(origin, service):
     """
         Establish a session for this user and this resource.
         This is not a production application!
@@ -234,7 +265,7 @@ def make_session(identifier, origin):
 
     if origin is None:
         origin = "[No origin supplied]"
-    print('User authed for service ', PROTECTED_IMAGE_SERVICE)
+    print('User authed for service ', service)
     print('origin is ', origin)
     # The token can be anything, but you shouldn't be able to
     # deduce the cookie value from the token value.
@@ -244,7 +275,7 @@ def make_session(identifier, origin):
     # no idea what the cookie is.
 
     # Store the fact that user can access this service in the session
-    session[PROTECTED_IMAGE_SERVICE] = True
+    session[service] = True
     # Now store a token associated that represents the user's access to this service
     token = uuid.uuid4().hex
     print('minted token:', token)
@@ -252,11 +283,11 @@ def make_session(identifier, origin):
 
     db = get_db()
     db.execute("delete from tokens where session_id=? and service_id=?",
-               [session_id, PROTECTED_IMAGE_SERVICE])
+               [session_id, service])
     db.commit()
     db.execute("insert into tokens (session_id, service_id, token, origin, created) "
                "values (?, ?, ?, ?, datetime('now'))",
-               [session_id, PROTECTED_IMAGE_SERVICE, token, origin])
+               [session_id, service, token, origin])
     db.commit()
 
 
