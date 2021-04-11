@@ -113,7 +113,7 @@ def image_info(identifier):
             "failureHeader": "Clickthrough Failed",
             "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>",
             "tokenService": url_for('token_service', service_type=CLICKTHROUGH_IMAGE_SERVICE, _external=True),
-            "storageAccessInteractionPage": url_for('storage_access_interaction', _external=True)
+            "storageAccessInteractionPage": url_for('storage_access_get', _external=True)
         }
 
     if authorise_probe_request(identifier):
