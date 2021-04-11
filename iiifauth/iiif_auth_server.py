@@ -112,7 +112,8 @@ def image_info(identifier):
             "confirmLabel": "OK",
             "failureHeader": "Clickthrough Failed",
             "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>",
-            "tokenService": url_for('token_service', service_type=CLICKTHROUGH_IMAGE_SERVICE, _external=True)
+            "tokenService": url_for('token_service', service_type=CLICKTHROUGH_IMAGE_SERVICE, _external=True),
+            "storageAccessInteractionPage": url_for('storage_access_interaction', _external=True)
         }
 
     if authorise_probe_request(identifier):
@@ -219,6 +220,16 @@ def clickthrough():
         return make_response("Error - no origin supplied", 400)
 
     return successful_login(origin, CLICKTHROUGH_IMAGE_SERVICE)
+
+
+@app.route('auth/storage-access', methods=['GET'])
+def storage_access_get():
+    return render_template("storage_access.html")
+
+
+@app.route('auth/storage-access', methods=['POST'])
+def storage_access_post():
+    return redirect(url_for('post_login'))
 
 
 def handle_login(origin, template):

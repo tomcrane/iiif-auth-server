@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Storage Access</h2>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <p>
+    You've been sent here because your browser isn't allowing cookies to be sent here along with your image requests.
+  </p>
+    <p>This is because your browser doesn't yet trust that this site is one you really want to interact with, and isn't just a tracker.</p>
+    <p>If you interact with this site, your browser will trust it. An interaction such as clicking the button below should be OK.</p>
+    <p>Even if the login pattern is clickthrough, you still might need this interaction if you haven't visited this site recently.</p>
+    <form method=post>
+    <input type="hidden" value="storage_flag" />
+    <input type=submit value="OK" />
+  </form>
+
+{% endblock %}

@@ -73,8 +73,8 @@
         window.parent.postMessage({"userInteractionRequest": "clicked"}, "{{ origin }}");
         log("User clicked 'Request storage access', calling API...")
         document.requestStorageAccess().then(
-              () => { postToken(true, "userGrantedAccess") }, // resolve
-              () => { postToken(false, "userDeniedAccess" ) } // reject
+              () => { postToken(true, "requestStorageAccessSucceeded") }, // resolve
+              () => { postToken(false, "requestStorageAccessFailed" ) } // reject
         );
     }
 </script>
