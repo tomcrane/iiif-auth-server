@@ -222,12 +222,12 @@ def clickthrough():
     return successful_login(origin, CLICKTHROUGH_IMAGE_SERVICE)
 
 
-@app.route('auth/storage-access', methods=['GET'])
+@app.route('/auth/storage-access', methods=['GET'])
 def storage_access_get():
     return render_template("storage_access.html")
 
 
-@app.route('auth/storage-access', methods=['POST'])
+@app.route('/auth/storage-access', methods=['POST'])
 def storage_access_post():
     return redirect(url_for('post_login'))
 
