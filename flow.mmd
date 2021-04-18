@@ -1,0 +1,101 @@
+title IIIF_Auth
+
+actor User
+participant ClientViewer
+participant MessageFrame
+participant Publisher
+
+note over ClientViewer, MessageFrame:
+    These two participants are both in the
+    same browser; the MessageFrame is 
+    created by the client viewer app.
+end note
+
+User -> ClientViewer: Action that requires image service\n(e.g., "view deep zoom image")
+activate ClientViewer
+ClientViewer -> Publisher: (XHR) GET image/info.json
+note right of Publisher:
+    This image service requires auth,
+    and the GET request did not include
+    a bearer token. We still serve the same 
+    JSON body (no secrets in the *description*)
+    but with a 401 status code, to indicate that
+    the client can't *use* the service.
+end note
+Publisher->Publisher: HTTP 401 Unauthorised
+note over ClientViewer:
+    The 401 response for the service description tells the 
+    client viewer app that if initiates requests for *content*
+    from the image service (e.g., tiles for deep zoom, 
+    crops, thumbnails), then these requests will *FAIL*.
+    The client needs to do something about this.
+end note
+ClientViewer -> ClientViewer: info.json has\nlogin_service?
+note left of ClientViewer
+    (assume it does, in this flow)
+end note
+note right of ClientViewer
+    We need to get the User to do something at Publisher
+    that will turn the HTTP 401 into a 200.
+    We don't know or care *what* they do there!
+end note 
+ClientViewer -> Publisher: publisherWindow = window.open(login_service)
+ClientViewer->ClientViewer: begin to poll for\npublisherWindow.closed
+note right of User:
+    User sees the publisher's login
+    page open in a new tab
+end note
+User -> Publisher: User authenticates
+activate Publisher
+note right of ClientViewer
+    The client viewer app has no visibility of
+    what happens here, and doesn't care
+    what "User authenticates" means.
+end note
+note right of Publisher:
+    Here the flow can do anything, e.g., enter
+    an OAuth2 flow, social login, campus SSO,
+    or any other interpretation of "authenticate",
+    which might just be agreeing to terms.
+end note
+note left of ClientViewer:
+    (still polling...)
+end note
+Publisher -> Publisher: set_cookie()
+Publisher -> Publisher: serve a page with\nwindow.close()
+deactivate Publisher
+ClientViewer->ClientViewer: detect publisherWindow.closed\nstop polling
+ClientViewer->MessageFrame: set iframe src to token_service
+activate MessageFrame
+deactivate ClientViewer
+MessageFrame->Publisher: (simple) GET token_service\nWILL HAVE PUBLISHER'S COOKIE
+activate Publisher
+Publisher->Publisher: Get token for cookie
+Publisher->Publisher: Build messaging JavaScript
+deactivate Publisher
+MessageFrame->ClientViewer: postMessage(token)
+deactivate MessageFrame
+activate ClientViewer
+ClientViewer -> Publisher: GET image/info.json\nWITH BEARER TOKEN token
+note right of Publisher:
+    This time, the server sees the bearer token in the
+    request header. It matches the token to the previously
+    granted cookie (the token is not the same as the cookie).
+    It returns the same info.json but this time with a 200
+    status code, to indicate that the client CAN use the service.
+end note
+note over ClientViewer:
+    The 200 response for the service description tells the 
+    client viewer app that if initiates requests for *content*
+    from the image service (e.g., tiles for deep zoom, 
+    crops, thumbnails), then these requests will *SUCCEED*
+end note
+ClientViewer->Publisher: (e.g., image requests...)
+note left of ClientViewer:
+   The client app can now create whatever user
+   experience it wants to from the image service.
+end note
+
+
+
+
