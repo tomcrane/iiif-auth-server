@@ -219,9 +219,9 @@ def assert_auth_services(info, identifier, prezi3=False):
         identifier = degraded_for
         config = MEDIA_AUTH_CONFIG[degraded_for]
 
-    services = config.get('auth_services', [])
+    services_for_resource = config.get('auth_services', []).copy()
 
-    for service in services:
+    for service in services_for_resource:
         if not prezi3:
             service['@context'] = iiifauth.terms.CONTEXT_AUTH
         pattern = get_pattern_name(service)
@@ -243,23 +243,20 @@ def assert_auth_services(info, identifier, prezi3=False):
             service["@type"] = "AuthCookieService1"
             service['service'][0]['@type'] = "AuthTokenService1"
             service['service'][1]['@type'] = "AuthLogoutService1"
-        
-        # Changed 2022-09-23 so that probe belongs to resource  # services.append({  
-        if config.get("explicit_probe", False):
-            service['service'].append({
-                "@id": f"{request.url_root}probe/{identifier}",
-                "@type": "AuthProbeService1",
-                "profile": iiifauth.terms.PROFILE_PROBE,
-            })
 
+    # Changed 2022-09-23 so that probe belongs to resource
+    if config.get("explicit_probe", False):
+        services_for_resource.append({  # service['service'].append({
+            "@id": f"{request.url_root}probe/{identifier}",
+            "@type": "AuthProbeService1",
+            "profile": iiifauth.terms.PROFILE_PROBE,
+        })
 
-
-
-    if len(services) > 0:
-        if prezi3 or len(services) > 1:
-            info['service'] = services
+    if len(services_for_resource) > 0:
+        if prezi3 or len(services_for_resource) > 1:
+            info['service'] = services_for_resource
         else:
-            info['service'] = services[0]
+            info['service'] = services_for_resource[0]
 
     max_width = original_config.get('maxWidth', None)
     if max_width is not None:
