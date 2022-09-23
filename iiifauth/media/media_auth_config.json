@@ -1,109 +1,94 @@
 {
-    "comment" : "This is neither IIIF nor JSON-LD, even though it contains fragments of IIIF. Its purpose is configuration the demo",
-    "01_Icarus_Breughel.jpg" : {   
-        "label": "Standard login",     
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ]
+    "comment": "This is neither IIIF nor JSON-LD, even though it contains fragments of IIIF. Its purpose is configuration the demo",
+    "01_Icarus_Breughel.jpg": {
+        "label": "Standard login",
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
     },
-    "02_gauguin.jpg" : {
+    "02_gauguin.jpg": {
         "label": "Login with degraded access for unauthed users",
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution for full quality",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view the full-quality content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Viewing greyscale version",
-                "failureDescription": "You don't appear to have access to the full colour version. <a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ],
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution for full quality",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view the full-quality content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Viewing greyscale version",
+            "failureDescription": "You don't appear to have access to the full colour version. <a href=\"http://example.org/policy\">Access Policy</a>"
+        }],
         "degraded": "02_gauguin_degraded.jpg"
     },
-    "02_gauguin_degraded.jpg" : {
+    "02_gauguin_degraded.jpg": {
         "label": "The degraded (open) form of the above",
-        "open" : true,
+        "open": true,
         "degraded_for": "02_gauguin.jpg"
     },
-    "03_clickthrough.jpg" : {
+    "03_clickthrough.jpg": {
         "label": "Clickthrough",
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/clickthrough",
-                "label": "Terms of Use for Example Institution",
-                "header": "Restricted Material with Terms of Use",
-                "description": "<span>... terms of use ... </span>",
-                "confirmLabel": "I Agree",
-                "failureHeader": "Terms of Use Not Accepted",
-                "failureDescription": "You must accept the terms of use to see the content."
-            }
-        ]
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/clickthrough",
+            "label": "Terms of Use for Example Institution",
+            "header": "Restricted Material with Terms of Use",
+            "description": "<span>... terms of use ... </span>",
+            "confirmLabel": "I Agree",
+            "failureHeader": "Terms of Use Not Accepted",
+            "failureDescription": "You must accept the terms of use to see the content."
+        }]
     },
-    "04_gene_cernan.jpg" : {
+    "04_gene_cernan.jpg": {
         "label": "Kiosk",
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/kiosk",
-                "label": "Internal cookie granting service",
-                "failureHeader": "Ooops!",
-                "failureDescription": "Call Bob at ext. 1234 to reboot the cookie server"
-            }
-        ]
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/kiosk",
+            "label": "Internal cookie granting service",
+            "failureHeader": "Ooops!",
+            "failureDescription": "Call Bob at ext. 1234 to reboot the cookie server"
+        }]
     },
-    "05_cader_idris.jpg" : {
+    "05_cader_idris.jpg": {
         "label": "External auth, log in at {server}external-cookie/05_cader_idris.jpg",
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/external",
-                "label": "External Authentication Required",
-                "failureHeader": "Restricted Material",
-                "failureDescription": "This material is not viewable without prior agreement"
-            }
-        ]
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/external",
+            "label": "External Authentication Required",
+            "failureHeader": "Restricted Material",
+            "failureDescription": "This material is not viewable without prior agreement"
+        }]
     },
-    "06_1959.jpg" : {        
+    "06_1959.jpg": {
         "label": "Login pattern, shared service",
-        "shared" : true,
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "You can still use the service information to vary the strings presented to the user.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ]
+        "shared": true,
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "You can still use the service information to vary the strings presented to the user.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
     },
-    "07_mars_water.jpg" : {  
+    "07_mars_water.jpg": {
         "label": "Clickthrough pattern, shared service",
-        "shared" : true,
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/clickthrough",
-                "label": "Terms of Use for Example Institution",
-                "header": "Restricted Material with Terms of Use",
-                "description": "<span>... terms of use ... </span>",
-                "confirmLabel": "I Agree",
-                "failureHeader": "Terms of Use Not Accepted",
-                "failureDescription": "You must accept the terms of use to see the content."
-            }
-        ]
+        "shared": true,
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/clickthrough",
+            "label": "Terms of Use for Example Institution",
+            "header": "Restricted Material with Terms of Use",
+            "description": "<span>... terms of use ... </span>",
+            "confirmLabel": "I Agree",
+            "failureHeader": "Terms of Use Not Accepted",
+            "failureDescription": "You must accept the terms of use to see the content."
+        }]
     },
-    "08_portmeirion.jpg" : {
+    "08_portmeirion.jpg": {
         "label": "Clickthrough AND external, to allow machine access; {server}external-cookie/08_portmeirion.jpg",
-        "auth_services" : [
-            {
+        "auth_services": [{
                 "profile": "http://iiif.io/api/auth/1/clickthrough",
                 "label": "Terms of Use for Example Institution",
                 "header": "Restricted Material with Terms of Use",
@@ -120,247 +105,236 @@
             }
         ]
     },
-    "09_lordship_lane.jpg" : {  
+    "09_lordship_lane.jpg": {
         "label": "Open content for reference",
-        "open" : true
+        "open": true
     },
-    "10_babel.jpg" : {  
+    "10_babel.jpg": {
         "label": "maxWidth enforced by server",
-        "open" : true,
+        "open": true,
         "maxWidth": 777,
         "width": 4945,
         "height": 3973
     },
-    "11_kitty_joyner.jpg" : {  
+    "11_kitty_joyner.jpg": {
         "label": "Anyone can zoom, login reqd for download",
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution to access hi res downloads",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view the full-quality content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Zoom only",
-                "failureDescription": "You will only be able to zoom in, but not download hi res versions."
-            }
-        ],
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution to access hi res downloads",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view the full-quality content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Zoom only",
+            "failureDescription": "You will only be able to zoom in, but not download hi res versions."
+        }],
         "degraded": "11_kitty_joyner_degraded.jpg",
         "width": 2400,
         "height": 3000
-    },    
-    "11_kitty_joyner_degraded.jpg" : {
+    },
+    "11_kitty_joyner_degraded.jpg": {
         "label": "degraded version - same image, but maxWidth=512",
-        "open" : true,
+        "open": true,
         "degraded_for": "11_kitty_joyner.jpg",
         "maxWidth": 512,
         "width": 2400,
         "height": 3000
     },
-    "20_av_big_buck_bunny.mp4" : {   
-        "label": "Not a service - basic AV test with no auth",    
+    "20_av_big_buck_bunny.mp4": {
+        "label": "Not a service - basic AV test with no auth",
         "type": "Video",
-        "open" : true
+        "open": true
     },
-    "21_av_lego.mp4" : {
-        "label": "Not a service - AV test with no explicit probe",    
-        "type": "Video",    
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ]
+    "21_av_lego.mp4": {
+        "label": "Not a service - AV test with no explicit probe",
+        "type": "Video",
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
     },
-    "22_av_stars.mp4" : {
-        "label": "Not a service - AV test with separate probe",    
-        "type": "Video",    
+    "22_av_stars.mp4": {
+        "label": "Not a service - AV test with separate probe",
+        "type": "Video",
         "explicit_probe": true,
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ]
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
     },
-    "23_32vs192kbps.mp3" : {
-        "label": "Degraded flow test for AV - published resource",    
-        "type": "Audio",    
+    "22a_sample-3s.mp3": {
+        "label": "AV Test MP3 with separate probe",
+        "type": "Audio",
         "explicit_probe": true,
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ],
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
+    },
+    "23_32vs192kbps.mp3": {
+        "label": "Degraded flow test for AV - published resource",
+        "type": "Audio",
+        "explicit_probe": true,
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }],
         "degraded": "23_32vs192kbps_degraded.mp3"
     },
-    "23_32vs192kbps_degraded.mp3" : {
+    "23_32vs192kbps_degraded.mp3": {
         "label": "degraded version of above, direct no auth",
-        "type": "Audio",    
-        "open" : true,
+        "type": "Audio",
+        "open": true,
         "degraded_for": "23_32vs192kbps.mp3"
     },
-    "24_pdf_prezi3.pdf" : {
-        "label": "Resource linked via rendering - a PDF",   
-        "type": "Text",    
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ]
+    "24_pdf_prezi3.pdf": {
+        "label": "Resource linked via rendering - a PDF",
+        "type": "Text",
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
     },
-    "25_open_audio_lo_qual.mp3" : {
+    "25_open_audio_lo_qual.mp3": {
         "label": "Low quality standalone audio",
-        "type": "Audio",    
-        "open" : true
+        "type": "Audio",
+        "open": true
     },
-    "26_bbb.mp4" : {
-        "label": "Degraded flow test for AV - published resource, video",    
-        "type": "Video",    
+    "26_bbb.mp4": {
+        "label": "Degraded flow test for AV - published resource, video",
+        "type": "Video",
         "explicit_probe": true,
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ],
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }],
         "degraded": "26_bbb_degraded.mp4"
     },
-    "26_bbb_degraded.mp4" : {
+    "26_bbb_degraded.mp4": {
         "label": "degraded version of above, direct no auth",
-        "type": "Video",    
-        "open" : true,
+        "type": "Video",
+        "open": true,
         "degraded_for": "26_bbb.mp4"
     },
-    "30_adaptive_audio_no_auth.mpd" : {
+    "30_adaptive_audio_no_auth.mpd": {
         "label": "Adaptive bit rate example, with missing parts",
         "type": "Audio",
         "open": true,
         "format": "application/dash+xml"
     },
-    "31_adaptive_audio.mpd" : {
-        "label": "Degraded flow test for Adaptive bit rate Audio",    
-        "type": "Audio",    
+    "31_adaptive_audio.mpd": {
+        "label": "Degraded flow test for Adaptive bit rate Audio",
+        "type": "Audio",
         "explicit_probe": true,
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ],
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }],
         "degraded": "31_adaptive_audio_degraded.mpd",
         "format": "application/dash+xml"
     },
-    "31_adaptive_audio_degraded.mpd" : {
+    "31_adaptive_audio_degraded.mpd": {
         "label": "degraded version of above, direct no auth",
-        "type": "Audio",    
-        "open" : true,
+        "type": "Audio",
+        "open": true,
         "degraded_for": "31_adaptive_audio.mpd",
         "format": "application/dash+xml"
     },
-    "41_3d_headrest.gltf" : {
-        "label": "Resource linked via rendering - a 3D model",   
-        "type": "PhysicalObject",    
+    "41_3d_headrest.gltf": {
+        "label": "Resource linked via rendering - a 3D model",
+        "type": "PhysicalObject",
         "format": "model/gltf+json",
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ]
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
     },
-    "manifest_01_beer_01.jpg" : {
-        "shared" : true,        
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ]
+    "manifest_01_beer_01.jpg": {
+        "shared": true,
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
     },
-    "manifest_01_beer_02.jpg" : {
-        "shared" : true,        
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ]
+    "manifest_01_beer_02.jpg": {
+        "shared": true,
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
     },
-    "manifest_01_beer_03.jpg" : {        
-        "shared" : true,
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ]
+    "manifest_01_beer_03.jpg": {
+        "shared": true,
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
     },
-    "shared" : {
-        "shared" : true,
-        "description" : "this is used for shared login",
-        "auth_services" : [
-            {
-                "profile": "http://iiif.io/api/auth/1/login",
-                "label": "Login to Example Institution",
-                "header": "Please Log In",
-                "description": "Example Institution requires that you log in with your example account to view this content.",
-                "confirmLabel": "Login",
-                "failureHeader": "Authentication Failed",
-                "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
-            }
-        ]
+    "shared": {
+        "shared": true,
+        "description": "this is used for shared login",
+        "auth_services": [{
+            "profile": "http://iiif.io/api/auth/1/login",
+            "label": "Login to Example Institution",
+            "header": "Please Log In",
+            "description": "Example Institution requires that you log in with your example account to view this content.",
+            "confirmLabel": "Login",
+            "failureHeader": "Authentication Failed",
+            "failureDescription": "<a href=\"http://example.org/policy\">Access Policy</a>"
+        }]
     }
 }
-
