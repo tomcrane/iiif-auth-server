@@ -1,4 +1,5 @@
 Flask
+gunicorn
 iiif2
 Pillow
 pyopenssl

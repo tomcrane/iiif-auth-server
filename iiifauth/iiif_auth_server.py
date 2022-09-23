@@ -772,4 +772,5 @@ def probe(identifier):
 
 
 if __name__ == '__main__':
-    app.run(ssl_context='adhoc')
+    # app.run(ssl_context=app.config.get("SSL_CONTEXT", None))
+    app.run()
