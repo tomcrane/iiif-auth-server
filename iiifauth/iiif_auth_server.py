@@ -243,15 +243,17 @@ def assert_auth_services(info, identifier, prezi3=False):
             service["@type"] = "AuthCookieService1"
             service['service'][0]['@type'] = "AuthTokenService1"
             service['service'][1]['@type'] = "AuthLogoutService1"
+        
+        # Changed 2022-09-23 so that probe belongs to resource  # services.append({  
+        if config.get("explicit_probe", False):
+            service['service'].append({
+                "@id": f"{request.url_root}probe/{identifier}",
+                "@type": "AuthProbeService1",
+                "profile": iiifauth.terms.PROFILE_PROBE,
+            })
 
 
-    # Changed 2022-09-23 so that probe belongs to resource
-    if config.get("explicit_probe", False):
-        services.append({  # service['service'].append({
-            "@id": f"{request.url_root}probe/{identifier}",
-            "@type": "AuthProbeService1",
-            "profile": iiifauth.terms.PROFILE_PROBE,
-        })
+
 
     if len(services) > 0:
         if prezi3 or len(services) > 1:
