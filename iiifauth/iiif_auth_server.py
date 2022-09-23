@@ -641,19 +641,22 @@ def kill_sessions():
     return redirect(url_for('view_session_tokens'))
 
 
-def connect_db():
-    """Connects to the specific database."""
-    conn = sqlite3.connect(app.database)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
 def get_db():
-    """Opens a new database connection if there is none yet for the
-    current application context.
+    """
+    Opens a new database connection if there is none yet for the
+    current application context, and ensures the token table exists in it.
     """
     if not hasattr(g, 'sqlite_db'):
-        g.sqlite_db = connect_db()
+        conn = sqlite3.connect(app.database)
+        conn.row_factory = sqlite3.Row
+        conn.cursor().executescript("create table if not exists tokens ( "
+                                    "session_id text not null, "
+                                    "service_id text not null, "
+                                    "token text not null, "
+                                    "origin text not null, "
+                                    "created text not null"
+                                    ");")
+        g.sqlite_db = conn
     return g.sqlite_db
 
 
