@@ -85,3 +85,71 @@ Then visit http://localhost:8000/ (Chrome treats `localhost` as secure, so the `
 * **Secret**: supply `IIIFAUTH_SECRET_KEY` from Secrets Manager or Parameter Store in the task definition.
 * **Health check**: `/index.json` returns 200.
 * **First-party client**: run iiif-auth-client's image as a second service on the same site, e.g. a sibling subdomain, or a path on the same domain using an ALB path rule. Set `IIIFAUTH_FIRST_PARTY_CLIENT_URL` to its URL.
+
+## Publishing to Amazon ECR
+
+`.github/workflows/docker.yml` builds the image for every pull request and push, to check that it still builds. Once it's configured, it also pushes the image to ECR from `master` (tagged `latest` and `sha-<commit>`) and from `v*` tags (tagged with the version). iiif-auth-client has the same workflow.
+
+The workflow signs in to AWS with GitHub's OIDC tokens, so there are no AWS keys stored in GitHub. To set it up, with the AWS CLI:
+
+1. If your AWS account doesn't already have GitHub's OIDC identity provider (IAM > Identity providers), add it:
+   ```
+   aws iam create-open-id-connect-provider --url https://token.actions.githubusercontent.com --client-id-list sts.amazonaws.com
+   ```
+2. Create the ECR repositories:
+   ```
+   aws ecr create-repository --repository-name iiif-auth-server
+   aws ecr create-repository --repository-name iiif-auth-client
+   ```
+   The workflow moves the `latest` tag, so don't turn on tag immutability, or remove `latest` from the workflow.
+3. Create a role that only these two repositories' `master` branches and `v*` tags can assume. Save this as `trust.json`, with your account id:
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [{
+       "Effect": "Allow",
+       "Principal": {"Federated": "arn:aws:iam::<account-id>:oidc-provider/token.actions.githubusercontent.com"},
+       "Action": "sts:AssumeRoleWithWebIdentity",
+       "Condition": {
+         "StringEquals": {"token.actions.githubusercontent.com:aud": "sts.amazonaws.com"},
+         "StringLike": {"token.actions.githubusercontent.com:sub": [
+           "repo:tomcrane/iiif-auth-server:ref:refs/heads/master",
+           "repo:tomcrane/iiif-auth-server:ref:refs/tags/v*",
+           "repo:tomcrane/iiif-auth-client:ref:refs/heads/master",
+           "repo:tomcrane/iiif-auth-client:ref:refs/tags/v*"
+         ]}
+       }
+     }]
+   }
+   ```
+   and this as `ecr-push.json`, with your region and account id:
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {"Effect": "Allow", "Action": "ecr:GetAuthorizationToken", "Resource": "*"},
+       {"Effect": "Allow", "Action": [
+           "ecr:BatchCheckLayerAvailability", "ecr:BatchGetImage", "ecr:InitiateLayerUpload",
+           "ecr:UploadLayerPart", "ecr:CompleteLayerUpload", "ecr:PutImage"],
+        "Resource": [
+           "arn:aws:ecr:<region>:<account-id>:repository/iiif-auth-server",
+           "arn:aws:ecr:<region>:<account-id>:repository/iiif-auth-client"]}
+     ]
+   }
+   ```
+   then:
+   ```
+   aws iam create-role --role-name iiif-auth-github-ecr --assume-role-policy-document file://trust.json
+   aws iam put-role-policy --role-name iiif-auth-github-ecr --policy-name ecr-push --policy-document file://ecr-push.json
+   ```
+4. Tell each GitHub repository where to push, with repository variables (Settings > Secrets and variables > Actions > Variables), or with the GitHub CLI:
+   ```
+   gh variable set AWS_ROLE_ARN --repo tomcrane/iiif-auth-server --body arn:aws:iam::<account-id>:role/iiif-auth-github-ecr
+   gh variable set AWS_REGION --repo tomcrane/iiif-auth-server --body <region>
+   gh variable set ECR_REPOSITORY --repo tomcrane/iiif-auth-server --body iiif-auth-server
+   ```
+   and the same for `tomcrane/iiif-auth-client`, with `ECR_REPOSITORY` set to `iiif-auth-client`.
+
+Until `AWS_ROLE_ARN` is set, the workflow only builds. It builds for `linux/amd64`; to build for Graviton as well, set a `DOCKER_PLATFORMS` variable to `linux/amd64,linux/arm64` (this is slower, as the arm64 build is emulated).
+
+The workflow only publishes images. Updating the ECS services to run a new image is up to you.
