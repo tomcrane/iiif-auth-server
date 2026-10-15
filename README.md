@@ -86,9 +86,20 @@ Then visit http://localhost:8000/ (Chrome treats `localhost` as secure, so the `
 * **Health check**: `/index.json` returns 200.
 * **First-party client**: run iiif-auth-client's image as a second service on the same site, e.g. a sibling subdomain, or a path on the same domain using an ALB path rule. Set `IIIFAUTH_FIRST_PARTY_CLIENT_URL` to its URL.
 
-## Publishing to Amazon ECR
+## Publishing the Docker image
 
-`.github/workflows/docker.yml` builds the image for every pull request and push, to check that it still builds. Once it's configured, it also pushes the image to ECR from `master` (tagged `latest` and `sha-<commit>`) and from `v*` tags (tagged with the version). iiif-auth-client has the same workflow.
+`.github/workflows/docker.yml` builds the image for every pull request and push, to check that it still builds. From `master` (tagged `latest` and `sha-<commit>`) and from `v*` tags (tagged with the version), it also pushes the image to:
+
+* **The GitHub Container Registry**, always - no setup needed:
+  ```
+  docker run -p 8000:8000 -e IIIFAUTH_SECRET_KEY=change-me ghcr.io/tomcrane/iiif-auth-server
+  ```
+  After the first push, check the package's visibility (the repo's **Packages** > package settings). If it's private, make it public so anyone can pull it without logging in.
+* **Amazon ECR**, once it's configured as below.
+
+iiif-auth-client has the same workflow.
+
+### Amazon ECR setup
 
 The workflow signs in to AWS with GitHub's OIDC tokens, so there are no AWS keys stored in GitHub. To set it up, with the AWS CLI:
 
@@ -150,6 +161,6 @@ The workflow signs in to AWS with GitHub's OIDC tokens, so there are no AWS keys
    ```
    and the same for `tomcrane/iiif-auth-client`, with `ECR_REPOSITORY` set to `iiif-auth-client`.
 
-Until `AWS_ROLE_ARN` is set, the workflow only builds. It builds for `linux/amd64`; to build for Graviton as well, set a `DOCKER_PLATFORMS` variable to `linux/amd64,linux/arm64` (this is slower, as the arm64 build is emulated).
+Until `AWS_ROLE_ARN` is set, the workflow only pushes to GHCR. It builds for `linux/amd64`; to build for Graviton as well, set a `DOCKER_PLATFORMS` variable to `linux/amd64,linux/arm64` (this is slower, as the arm64 build is emulated).
 
 The workflow only publishes images. Updating the ECS services to run a new image is up to you.
