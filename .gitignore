@@ -70,7 +70,7 @@ target/
 .ipynb_checkpoints
 
 # pyenv
-.python-version
+# .python-version is committed; it tells the host which Python to use
 
 # celery beat schedule file
 celerybeat-schedule
@@ -92,3 +92,5 @@ iiifauth/iiifauth.db
 
 .vscode/
 .idea/
+# A copy of iiif-auth-client, served at /client/ for same-origin testing
+client/

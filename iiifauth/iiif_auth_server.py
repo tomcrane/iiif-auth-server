@@ -9,27 +9,34 @@ from datetime import timedelta, datetime
 
 from flask import (
     Flask, make_response, request, session, url_for,
-    render_template, redirect, send_file, jsonify
+    render_template, redirect, send_file, send_from_directory, jsonify, abort
 )
-import iiif2
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import iiifauth
-from iiifauth.media_helpers import get_media_path, get_media_summaries, get_all_files, make_manifest, get_single_file, \
-    get_pattern_name, assert_auth_services, get_actual_dimensions, transform_info_json
+from iiifauth import image_api
+from iiifauth.media_helpers import get_media_path, get_media_summaries, get_manifest_summaries, make_manifest, \
+    get_single_file, get_pattern_name, assert_auth_services, get_auth_service_configs, MEDIA_ROOT
 from iiifauth.responses import make_acao_response, preflight
 from iiifauth.session_db import get_session_tokens, end_session_for_service, get_session_id, establish_session, \
     get_db_token_for_session, kill_db_sessions, get_db_token, close_db
 
 app = Flask(__name__)
+# When hosted, we're behind a proxy that terminates TLS; trust its headers so that
+# the ids we generate with url_for(..., _external=True) are https URLs on the public host.
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.permanent_session_lifetime = timedelta(minutes=10)
-app.secret_key = 'Set a sensible secret key here'
+app.secret_key = os.environ.get('IIIFAUTH_SECRET_KEY', 'Set a sensible secret key here')
 app.database_file = os.path.join(app.root_path, 'iiifauth.db')
+# A copy of iiif-auth-client served by this server, so it's on the same origin as the auth services.
+app.client_dir = os.environ.get('IIIFAUTH_CLIENT_DIR', os.path.join(os.path.dirname(app.root_path), 'client'))
 app.config.update(dict(
     SERVER_NAME=os.environ.get('IIIFAUTH_SERVER_NAME', None),
     SESSION_COOKIE_SAMESITE='None',
-    SESSION_COOKIE_SECURE=True,
-    JSON_SORT_KEYS=False
+    SESSION_COOKIE_SECURE=True
 ))
+# Keep the JSON in the order we build it, it's easier to read
+app.json.sort_keys = False
 
 
 @app.before_request
@@ -47,8 +54,9 @@ def teardown(error):
 @app.route('/')
 def index():
     """Home page: list all the authed resources we have, and where available, manifests that refer to them"""
-    manifest_ids = [file["file"] for file in get_all_files() if file["provideManifest"]]
-    return render_template('index.html', media=get_media_summaries(), manifests=manifest_ids)
+    return render_template('index.html', media=get_media_summaries(), manifests=get_manifest_summaries(),
+                           same_origin_client=os.path.isdir(app.client_dir),
+                           collection_url=url_for('collection', _external=True))
 
 
 @app.route('/index.json')
@@ -63,20 +71,18 @@ def collection():
         IIIF Collection of all Manifests for the resources marked with provideManifest
     """
     iiif_coll = {
-        "@context": iiifauth.terms.CONTEXT_AUTH_2,
+        "@context": iiifauth.terms.CONTEXT_PRESENTATION_3,
         "id": url_for('collection', _external=True),
         "type": "Collection",
         "label": {"en": ["Sample Manifests for exploring IIIF Auth 2"]},
         "items": []
     }
-    for resource in get_media_summaries():
-        manifest_id = resource.get("partOf", None)
-        if manifest_id:
-            iiif_coll["items"].append({
-                "id": manifest_id,
-                "type": "Manifest",
-                "label": {"en": [resource["label"]]}
-            })
+    for summary in get_manifest_summaries():
+        iiif_coll["items"].append({
+            "id": summary["id"],
+            "type": "Manifest",
+            "label": {"en": [summary["label"]]}
+        })
 
     return make_acao_response(jsonify(iiif_coll), 200, True)
 
@@ -85,6 +91,8 @@ def collection():
 def manifest(identifier):
     """ IIIF Presentation 3.0 Manifest to carry the resource """
     new_manifest = make_manifest(identifier)
+    if new_manifest is None:
+        abort(404)
     return make_acao_response(jsonify(new_manifest), 200, True)
 
 
@@ -107,42 +115,40 @@ def image_info(identifier):
         print('CORS preflight request for', identifier)
         return preflight()
 
+    get_image_service_policy(identifier)
     uri = url_for('image_id', identifier=identifier, _external=True)
 
-    # Use the iiif2 library to generate the info.json
-    # We'll prepend the Auth2 @context; the context has to allow
-    iiif2_info = iiif2.web.info(uri, get_media_path(identifier))  # the info.json object
-    info = transform_info_json(iiif2_info, version=2)
+    # Generate the Image API 3 info.json, then add the Auth2 @context and services
+    info = image_api.info_json(uri, get_media_path(identifier))
     assert_auth_services(info, identifier)
 
     return make_acao_response(jsonify(info), 200)
 
 
 @app.route('/img/<identifier>/<region>/<size>/<rotation>/<quality>.<fmt>')
-def image_api_request(identifier, **kwargs):
+def image_api_request(identifier, region, size, rotation, quality, fmt):
     """
-        A IIIF Image API request; use iiif2 to generate the tile and return the pixels.
-        Also handles a (limited) implementation of maxWidth; enough to demo.
+        A IIIF Image API 3 request; generate the image and return the pixels.
+        Also enforces maxWidth, if the image has one.
     """
+    policy = get_image_service_policy(identifier)
     if authorise_resource_request(identifier):
-        params = iiif2.web.Parse.params(identifier, **kwargs)
-        config = get_single_file(identifier)
-        max_width = config.get('maxWidth', None)
-        if max_width is not None:
-            full_w = config['width']
-            full_h = config['height']
-            req_w, req_h = get_actual_dimensions(
-                params.get('region'),
-                params.get('size'),
-                full_w,
-                full_h)
-            if req_w > max_width or req_h > max_width:
-                return make_response("Requested size too large, maxWidth is " + str(max_width))
-
-        tile = iiif2.iiif.IIIF.render(get_media_path(identifier), **params)
-        return send_file(tile, mimetype=tile.mime)
+        try:
+            image, mimetype = image_api.render(get_media_path(identifier), region, size, rotation, quality, fmt,
+                                               max_width=policy.get('maxWidth', None))
+        except image_api.ImageRequestError as error:
+            return make_response(str(error), error.status)
+        return send_file(image, mimetype=mimetype)
 
     return make_response("Not authorised", 401)
+
+
+def get_image_service_policy(identifier):
+    """The config for an image that has an image service, or a 404 if there isn't one"""
+    policy = get_single_file(identifier)
+    if not policy or not policy.get("provideImageService", False):
+        abort(404)
+    return policy
 
 
 @app.route('/auth/access/<pattern>/<identifier>', methods=['GET', 'POST'])
@@ -170,9 +176,11 @@ def access_service(pattern, identifier):
         establish_session(get_access_service_id(pattern, identifier), origin)
         return redirect_to_self_closing_window()
 
-    elif pattern == 'external':
+    elif pattern.startswith('external'):
         return make_response("Error - a client should not call an "
                              "external auth access service @id", 400)
+
+    abort(404)
 
 
 def handle_active(pattern, identifier, origin, template):
@@ -193,17 +201,21 @@ def handle_active(pattern, identifier, origin, template):
         The client opens the window (tab) and waits for it to close.
     """
 
-    if authorise_resource_request(identifier):
+    error = None
+    if identifier == 'shared':
+        # A shared access service isn't for any one resource; does the user already have a session for it?
+        already_authorised = session.get(get_access_service_id(pattern, identifier), False)
+    elif get_single_file(identifier):
+        already_authorised = authorise_resource_request(identifier)
+    else:
+        already_authorised = False
+        error = f"No access service for {identifier}"
+
+    if already_authorised:
         # the client opened the window, but we know the user is OK for this resource.
         # so just start or re-start a session and close the window immediately.
         establish_session(get_access_service_id(pattern, identifier), origin)
         return redirect_to_self_closing_window()
-
-    error = None
-    if identifier != 'shared':
-        policy = get_single_file(identifier)
-        if not policy:
-            error = f"No access service for {identifier}"
 
     # In our demo, we're using a POST to indicate that the user has done whatever they need to do
     # in the opened window. This isn't required, but it will be common - e.g., submitting a login form.
@@ -324,6 +336,8 @@ def resource_request(identifier):
         return preflight()
 
     policy = get_single_file(identifier)
+    if not policy:
+        abort(404)
     if authorise_resource_request(identifier):
         resp = send_file(get_media_path(identifier))
         required_session_origin = None
@@ -366,10 +380,10 @@ def resource_request_fragment(manifest_identifier, fragment):
     if len(id_parts) == 1:
         id_parts.append(None)
     identifier, token = tuple(id_parts)
-    reconstructed_path = os.path.join(manifest_identifier, fragment)
     # TODO
     # if not access controlled, just serve the fragment:
-    return make_acao_response(send_file(get_media_path(reconstructed_path)))
+    # (send_from_directory refuses paths that would escape the media directory)
+    return make_acao_response(send_from_directory(MEDIA_ROOT, f"{manifest_identifier}/{fragment}"))
     # If token is not None, authorise on that. It should be a hash of the user's sesison token
     # (for demo purposes!)
     # Otherwise, look for cookies and use them.
@@ -381,6 +395,8 @@ def probe(identifier):
         return preflight()
 
     policy = get_single_file(identifier)
+    if not policy:
+        abort(404)
 
     probe_body = {
         "@context": iiifauth.terms.CONTEXT_AUTH_2,
@@ -398,7 +414,7 @@ def probe(identifier):
             if policy.get("provideImageService", False):
                 probe_body["substitute"] = {
                     "id": url_for('image_id', identifier=degraded_version, _external=True),
-                    "type": "ImageService2"
+                    "type": "ImageService3"
                 }
             else:
                 probe_body["substitute"] = {
@@ -423,7 +439,7 @@ def authorise_probe_request(identifier):
     """
 
     policy = get_single_file(identifier)
-    services = policy.get('auth_services', [])
+    services = get_auth_service_configs(policy)
     if len(services) == 0:
         print(f'{identifier} is open, no auth required')
         return True
@@ -468,7 +484,7 @@ def authorise_resource_request(identifier):
         This method should not accept a token as evidence of identity
     """
     policy = get_single_file(identifier)
-    services = policy.get('auth_services', [])
+    services = get_auth_service_configs(policy)
     if len(services) == 0:
         return True  # absence of services in our config indicates "open"
 
@@ -490,6 +506,19 @@ def authorise_resource_request(identifier):
 
     # handle other possible authorisation mechanisms, such as IP
     return False
+
+
+@app.route('/client/')
+@app.route('/client/<path:filename>')
+def same_origin_client(filename='index.html'):
+    """
+        Serve a copy of iiif-auth-client from this server, if one has been put in app.client_dir.
+        Compare it with the copy hosted on another site (e.g., GitHub Pages) to see the effect of
+        browsers' third-party cookie policies.
+    """
+    if not os.path.isdir(app.client_dir):
+        abort(404)
+    return send_from_directory(app.client_dir, filename)
 
 
 @app.route('/sessiontokens')

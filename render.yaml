@@ -1,0 +1,20 @@
+# Render Blueprint - https://render.com/docs/blueprint-spec
+# The Python version comes from .python-version
+services:
+  - type: web
+    name: iiif-auth-server
+    runtime: python
+    plan: free
+    # Also fetch iiif-auth-client, so it can be served from /client/ on the same origin as the auth services
+    buildCommand: >-
+      pip install -r requirements.txt &&
+      rm -rf client &&
+      git clone --depth 1 --branch "$IIIFAUTH_CLIENT_REF" https://github.com/tomcrane/iiif-auth-client.git client &&
+      rm -rf client/.git
+    startCommand: gunicorn --workers 2 --threads 4 iiifauth:app
+    healthCheckPath: /index.json
+    envVars:
+      - key: IIIFAUTH_SECRET_KEY
+        generateValue: true
+      - key: IIIFAUTH_CLIENT_REF
+        value: master

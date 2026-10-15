@@ -1,5 +1,14 @@
 {% extends "layout.html" %}
 {% block body %}
+    <h3>Try it in a client</h3>
+    <ul>
+        {% if same_origin_client %}
+            <li><a href="{{ url_for('same_origin_client') }}?collection={{ collection_url | urlencode }}">Same-origin client</a>
+                - served from this server, so the auth cookies are first-party</li>
+        {% endif %}
+        <li><a href="https://tomcrane.github.io/iiif-auth-client/?collection={{ collection_url | urlencode }}">Cross-site client</a>
+            - on GitHub Pages, so the auth cookies are third-party, and subject to the browser's policy for them</li>
+    </ul>
     <h3>Resources (IIIF Image Services, and other files)</h3>
     <ul class=images>
         {% for resource in media %}
@@ -15,7 +24,7 @@
         <li style="margin: 0.4em 0">As individual Manifests:</li>
         <ul class=manifests>
             {% for manifest in manifests %}
-                <li><a href="{{ url_for('manifest', identifier=manifest) }}">{{ manifest }}</a></li>
+                <li><a href="{{ manifest.id }}">{{ manifest.identifier }}</a> - {{ manifest.label }}</li>
             {% else %}
                 <li><em>No manifests found!</em>
             {% endfor %}

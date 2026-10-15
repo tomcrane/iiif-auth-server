@@ -7,7 +7,7 @@ def requirements():
     here = os.path.abspath(os.path.dirname(__file__))
     reqtxt = os.path.join(here, u'requirements.txt')
     with open(reqtxt) as f:
-        return f.read().split()
+        return [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
 
 setup(

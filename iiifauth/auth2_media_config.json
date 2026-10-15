@@ -135,7 +135,7 @@
       "metadata": [
         {
           "label": "Note",
-          "value": "No UI is offered by the viewer. You need to have acquired the cookie by logging in somewhere else. Go to {content-server}/external-access/05_cader_idris.jpg"
+          "value": "No UI is offered by the viewer. You need to have acquired the cookie by logging in somewhere else. Go to {server}external-access/05_cader_idris.jpg"
         }
       ],
       "auth_services": [
@@ -655,6 +655,57 @@
         {
           "hint": "use_shared"
         }
+      ]
+    }
+  ],
+  "manifests": [
+    {
+      "id": "beer",
+      "label": "Beer : its history and its economic value as a national beverage",
+      "summary": "A multi-page work behind the shared login service. Logging in once gives access to every page, and to the 'Login pattern, shared service' example.",
+      "metadata": [
+        {
+          "label": "Title",
+          "value": "Beer : its history and its economic value as a national beverage"
+        },
+        {
+          "label": "Author(s)",
+          "value": "Salem, F. W; Francis A. Countway Library of Medicine"
+        },
+        {
+          "label": "Publication date",
+          "value": "1880, ©1879."
+        }
+      ],
+      "requiredStatement": {
+        "label": "Attribution",
+        "value": "This material has been provided by Francis A. Countway Library of Medicine where the originals may be consulted."
+      },
+      "rights": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "files": [
+        "manifest_01_beer_01.jpg",
+        "manifest_01_beer_02.jpg",
+        "manifest_01_beer_03.jpg"
+      ]
+    },
+    {
+      "id": "all-image-examples",
+      "label": "All the image examples in one Manifest",
+      "summary": "Every image example, each canvas with its own auth services (or none). Useful for testing viewers that handle more than one canvas.",
+      "files": [
+        "09_lordship_lane.jpg",
+        "01_Icarus_Breughel.jpg",
+        "02_gauguin.jpg",
+        "03_clickthrough.jpg",
+        "04_gene_cernan.jpg",
+        "05_cader_idris.jpg",
+        "06_1959.jpg",
+        "07_mars_water.jpg",
+        "08_portmeirion.jpg",
+        "10_babel.jpg",
+        "11_kitty_joyner.jpg",
+        "13_Not_A_Robot.jpg",
+        "14_Right_Time.jpg"
       ]
     }
   ],
