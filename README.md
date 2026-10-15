@@ -18,16 +18,16 @@ There is an accompanying JavaScript client application to run against the server
 
 This is not a production application! A typical institutional implementation would likely protect many thousands of images with the same access services, whereas this demo makes you authenticate for most of the sample images separately. It also gives access to everyone's session for diagnostic purposes, has one hardcoded username and password (`username` / `password`) for the login pattern, and so on. However, it should exercise every part of the specification.
 
-## Two clients: same origin and cross-site
+## Two clients: first-party and third-party
 
-The access services in this specification rely on the browser sending cookies with requests for the content - e.g., an `<img>` or `<video>` element's `src`. When the client is on a different site from the server, those are _third-party_ cookies, and many browsers now block or partition them.
+The access services in this specification rely on the browser sending cookies with requests for the content - e.g., an `<img>` or `<video>` element's `src`. When the client is on a different _site_ from the server, those are _third-party_ cookies, and many browsers now block or partition them.
 
-So the home page links to two copies of iiif-auth-client:
+So the home page links to two copies of the same iiif-auth-client code:
 
-* **Same origin** - served from this server at `/client/`. The cookies are first-party.
-* **Cross-site** - [on GitHub Pages](https://tomcrane.github.io/iiif-auth-client/). The cookies are third-party, and subject to the browser's policy for them.
+* **First-party** - on the same site as this server, e.g. `client.example.org` alongside `iiifauth.example.org`, or a path on the same domain. Set `IIIFAUTH_FIRST_PARTY_CLIENT_URL` to its URL. iiif-auth-client has a Docker image for this.
+* **Third-party** - [on GitHub Pages](https://tomcrane.github.io/iiif-auth-client/) by default (`IIIFAUTH_THIRD_PARTY_CLIENT_URL`). Its cookies are subject to the browser's policy for third-party cookies.
 
-The server serves the client from the `client` directory next to the `iiifauth` package, or from the directory in the `IIIFAUTH_CLIENT_DIR` environment variable. The Render build (below) clones it there.
+A site is the scheme plus the registrable domain, ignoring the port - so when you're developing locally, a client on `http://localhost:8080` is first-party to a server on `http://localhost:5000`.
 
 ## Usage
 
@@ -53,11 +53,7 @@ or
 
 This will give nasty warnings about the SSL but works without having to do anything further. It _must_ be run over https, otherwise `SameSite=None; Secure` cookies will be ignored by browsers. (Chrome treats `http://localhost` as secure, so `flask run` without a certificate also works there.)
 
-To use the same-origin client locally, either clone iiif-auth-client into `./client`, or point `IIIFAUTH_CLIENT_DIR` at your copy:
-```
-export IIIFAUTH_CLIENT_DIR=../iiif-auth-client
-```
-then visit `/client/?collection=<this server>/collection.json`.
+To try a first-party client locally, serve a copy of iiif-auth-client from another port on localhost, using the same scheme as the server. For example, in Chrome, run the server with plain `flask run`, run `python -m http.server 8080` in the client's directory (or use its Docker image), and visit `http://localhost:8080/?collection=http://localhost:5000/collection.json`.
 
 5. Token information is stored in a sqlite3 db which initialises itself.
 
@@ -66,15 +62,26 @@ then visit `/client/?collection=<this server>/collection.json`.
 | Environment variable | Purpose |
 | --- | --- |
 | `IIIFAUTH_SECRET_KEY` | Signs the Flask session cookie. Set this to a random value when hosting. |
+| `IIIFAUTH_DATABASE_FILE` | Where to keep the sqlite token database. Defaults to `iiifauth/iiifauth.db`. |
+| `IIIFAUTH_FIRST_PARTY_CLIENT_URL` | URL of a copy of iiif-auth-client on the same site as this server, linked from the home page. |
+| `IIIFAUTH_THIRD_PARTY_CLIENT_URL` | URL of a copy on a different site. Defaults to the GitHub Pages copy. |
 | `IIIFAUTH_SERVER_NAME` | Optional; Flask's `SERVER_NAME`. |
-| `IIIFAUTH_CLIENT_DIR` | Where to find the copy of iiif-auth-client to serve at `/client/`. |
 
-## Hosting
+## Docker
 
-The repo includes a [Render](https://render.com) Blueprint, `render.yaml`. In the Render dashboard, choose **New > Blueprint** and select this repo. It runs on the free plan, which spins down after 15 minutes without traffic and takes about a minute to wake up. The local disk is wiped when it spins down, which loses the token database - users just have to log in again.
+The `Dockerfile` builds an image for hosting, e.g. on AWS ECS / Fargate. It runs gunicorn on port 8000, as a non-root user.
 
-The build clones iiif-auth-client (the branch in `IIIFAUTH_CLIENT_REF`, default `master`) into `./client`.
+```
+docker build -t iiif-auth-server .
+docker run -p 8000:8000 -e IIIFAUTH_SECRET_KEY=change-me iiif-auth-server
+```
 
-Run a single instance: the token database is a local sqlite file. The app trusts `X-Forwarded-Proto` and `X-Forwarded-Host` from the proxy in front of it, so the ids it generates are https URLs on the public host name.
+Then visit http://localhost:8000/ (Chrome treats `localhost` as secure, so the `Secure` cookies work there without https).
 
-`Procfile` has the same start command, for other hosts that use one.
+### Running on ECS / Fargate
+
+* **TLS**: terminate it at the load balancer. The app trusts `X-Forwarded-Proto` (and `X-Forwarded-Host`, if present) from the proxy in front of it, so the ids it generates are https URLs on the public host name. ALB passes the original `Host` header through; if you put CloudFront in front, forward the `Host` header to the origin.
+* **One task**: the token database is a sqlite file inside the container. Run a single task, or enable sticky sessions on the target group, otherwise a token issued by one task won't be recognised by another. Losing the database when a task is replaced is fine; users just log in again.
+* **Secret**: supply `IIIFAUTH_SECRET_KEY` from Secrets Manager or Parameter Store in the task definition.
+* **Health check**: `/index.json` returns 200.
+* **First-party client**: run iiif-auth-client's image as a second service on the same site, e.g. a sibling subdomain, or a path on the same domain using an ALB path rule. Set `IIIFAUTH_FIRST_PARTY_CLIENT_URL` to its URL.

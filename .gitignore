@@ -92,5 +92,3 @@ iiifauth/iiifauth.db
 
 .vscode/
 .idea/
-# A copy of iiif-auth-client, served at /client/ for same-origin testing
-client/

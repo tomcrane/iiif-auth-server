@@ -26,10 +26,16 @@ app = Flask(__name__)
 # the ids we generate with url_for(..., _external=True) are https URLs on the public host.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app.permanent_session_lifetime = timedelta(minutes=10)
-app.secret_key = os.environ.get('IIIFAUTH_SECRET_KEY', 'Set a sensible secret key here')
-app.database_file = os.path.join(app.root_path, 'iiifauth.db')
-# A copy of iiif-auth-client served by this server, so it's on the same origin as the auth services.
-app.client_dir = os.environ.get('IIIFAUTH_CLIENT_DIR', os.path.join(os.path.dirname(app.root_path), 'client'))
+app.secret_key = os.environ.get('IIIFAUTH_SECRET_KEY', None)
+if not app.secret_key:
+    print('IIIFAUTH_SECRET_KEY is not set; using an insecure development key')
+    app.secret_key = 'Set a sensible secret key here'
+app.database_file = os.environ.get('IIIFAUTH_DATABASE_FILE', os.path.join(app.root_path, 'iiifauth.db'))
+# Copies of iiif-auth-client to link to from the home page. The first-party client is on the same
+# site as this server (e.g., a sibling subdomain); the third-party client is on a different site.
+app.first_party_client = os.environ.get('IIIFAUTH_FIRST_PARTY_CLIENT_URL', None)
+app.third_party_client = os.environ.get('IIIFAUTH_THIRD_PARTY_CLIENT_URL',
+                                        'https://tomcrane.github.io/iiif-auth-client/')
 app.config.update(dict(
     SERVER_NAME=os.environ.get('IIIFAUTH_SERVER_NAME', None),
     SESSION_COOKIE_SAMESITE='None',
@@ -55,7 +61,7 @@ def teardown(error):
 def index():
     """Home page: list all the authed resources we have, and where available, manifests that refer to them"""
     return render_template('index.html', media=get_media_summaries(), manifests=get_manifest_summaries(),
-                           same_origin_client=os.path.isdir(app.client_dir),
+                           first_party_client=app.first_party_client, third_party_client=app.third_party_client,
                            collection_url=url_for('collection', _external=True))
 
 
@@ -506,19 +512,6 @@ def authorise_resource_request(identifier):
 
     # handle other possible authorisation mechanisms, such as IP
     return False
-
-
-@app.route('/client/')
-@app.route('/client/<path:filename>')
-def same_origin_client(filename='index.html'):
-    """
-        Serve a copy of iiif-auth-client from this server, if one has been put in app.client_dir.
-        Compare it with the copy hosted on another site (e.g., GitHub Pages) to see the effect of
-        browsers' third-party cookie policies.
-    """
-    if not os.path.isdir(app.client_dir):
-        abort(404)
-    return send_from_directory(app.client_dir, filename)
 
 
 @app.route('/sessiontokens')

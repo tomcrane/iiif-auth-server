@@ -2,12 +2,12 @@
 {% block body %}
     <h3>Try it in a client</h3>
     <ul>
-        {% if same_origin_client %}
-            <li><a href="{{ url_for('same_origin_client') }}?collection={{ collection_url | urlencode }}">Same-origin client</a>
-                - served from this server, so the auth cookies are first-party</li>
+        {% if first_party_client %}
+            <li><a href="{{ first_party_client }}?collection={{ collection_url | urlencode }}">First-party client</a>
+                - on the same site as this server, so the auth cookies are first-party</li>
         {% endif %}
-        <li><a href="https://tomcrane.github.io/iiif-auth-client/?collection={{ collection_url | urlencode }}">Cross-site client</a>
-            - on GitHub Pages, so the auth cookies are third-party, and subject to the browser's policy for them</li>
+        <li><a href="{{ third_party_client }}?collection={{ collection_url | urlencode }}">Third-party client</a>
+            - on a different site, so the auth cookies are third-party, and subject to the browser's policy for them</li>
     </ul>
     <h3>Resources (IIIF Image Services, and other files)</h3>
     <ul class=images>
