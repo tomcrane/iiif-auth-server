@@ -70,7 +70,7 @@ target/
 .ipynb_checkpoints
 
 # pyenv
-.python-version
+# .python-version is committed; it tells the host which Python to use
 
 # celery beat schedule file
 celerybeat-schedule

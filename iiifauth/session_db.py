@@ -13,7 +13,7 @@ def get_session_tokens():
 
 
 def end_session_for_service(service_id):
-    session.pop('service_id')
+    session.pop(service_id, None)
     database = get_db()
     database.execute('delete from tokens where session_id=? and service_id=?',
                      [get_session_id(), service_id])
